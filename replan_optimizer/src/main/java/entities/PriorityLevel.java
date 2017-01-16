@@ -13,7 +13,8 @@ public enum PriorityLevel {
 	TWO(2, 80),
 	THREE(3, 40),
 	FOUR(4, 20),
-	FIVE(5, 10);
+	FIVE(5, 10),
+	SIX(6,1);
 	
 	/**
 	 * The priority level
@@ -64,8 +65,10 @@ public enum PriorityLevel {
 				return PriorityLevel.THREE;
 			case 4:
 				return PriorityLevel.FOUR;
-			default:
+			case 5:
 				return PriorityLevel.FIVE;
+			default:
+				return PriorityLevel.SIX;
 		}
 	}
 }

@@ -2,7 +2,7 @@ package entities;
 
 /**
  * Describes a feature in a planning
- * Contains 
+ * Contains
  * - the feature to do
  * - the employee in charge of the feature
  * - the begin hour in the planning
@@ -10,46 +10,54 @@ package entities;
  * @author Vavou
  *
  */
-public class PlannedFeature {
-	
+public class
+
+
+
+
+PlannedFeature {
+
 	/* --- Attributes --- */
-	
+
 	/**
 	 * The begin hour of the planned feature
 	 */
-	private double beginHour;
-	
+	private Double beginHour;
+
 	/**
 	 * The employee who will do the feature
 	 */
 	private Employee employee;
-	
+
 	/**
 	 * The end hour of the planned feature
 	 */
-	private double endHour;
-	
+	private Double endHour;
+
 	/**
 	 * The feature to do
 	 */
 	private Feature feature;
-	
-	
+
+
 	/* --- Getters and setters --- */
 
 
 	/**
 	 * @return the beginHour
 	 */
-	public double getBeginHour() {
+	public Double getBeginHour() {
 		return beginHour;
 	}
 
 	/**
 	 * @param beginHour the beginHour to set
 	 */
-	public void setBeginHour(double beginHour) {
-		this.beginHour = beginHour;
+	public void setBeginHour(Double beginHour) {
+		if(feature.getCanReplan()) {
+			this.beginHour = beginHour;
+			this.feature.setIniTime(beginHour);
+		}
 	}
 
 	/**
@@ -63,21 +71,24 @@ public class PlannedFeature {
 	 * @param employee the employee to set
 	 */
 	public void setEmployee(Employee employee) {
-		this.employee = employee;
+		if(this.feature.getCanReplan())  {
+			this.feature.setAssignedEmployee(employee.getName());
+			this.employee = employee;
+		}
 	}
 
 	/**
 	 * @return the endHour
 	 */
-	public double getEndHour() {
+	public Double getEndHour() {
 		return endHour;
 	}
 
 	/**
 	 * @param endHour the endHour to set
 	 */
-	public void setEndHour(double endHour) {
-		this.endHour = endHour;
+	public void setEndHour(Double endHour) {
+		if(this.feature.getCanReplan()) this.endHour = endHour;
 	}
 
 	/**
@@ -93,8 +104,8 @@ public class PlannedFeature {
 	public void setFeature(Feature feature) {
 		this.feature = feature;
 	}
-	
-	
+
+
 	/* --- Constructors --- */
 
 	/**
@@ -104,10 +115,24 @@ public class PlannedFeature {
 	 */
 	public PlannedFeature(Feature feature, Employee employee) {
 		this.feature = feature;
+		this.feature.setAssignedEmployee(employee.getName());
 		this.employee = employee;
-		beginHour = 0.0;
+		if(!feature.getCanReplan()) {
+			this.beginHour = feature.getIniTime();
+			this.endHour = feature.getEndTime();
+		}
 	}
-	
+
+	public PlannedFeature(Feature feature, Employee employee,Double iniTime,Double endTime) {
+		this.feature = feature;
+		this.feature.setAssignedEmployee(employee.getName());
+		this.employee = employee;
+		if(!feature.getCanReplan()) {
+			this.beginHour = iniTime;
+			this.endHour = endTime;
+		}
+	}
+
 	/**
 	 * Copy constructor
 	 * @param origin the object to copy
@@ -118,9 +143,9 @@ public class PlannedFeature {
 		this.feature = origin.getFeature();
 		this.endHour = origin.getEndHour();
 	}
-	
+
 	/* --- Methods --- */
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -133,22 +158,22 @@ public class PlannedFeature {
 
 		return other.getFeature().equals(this.getFeature()) &&
 				other.getEmployee().equals(this.getEmployee()) &&
-				other.getBeginHour() == this.getBeginHour() && 
+				other.getBeginHour() == this.getBeginHour() &&
 				other.getEndHour() == this.getEndHour();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return new Double(getBeginHour()).intValue();
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(getFeature()).append(" done by ").append(getEmployee())
 			.append(" from ").append(getBeginHour()).append(" to ").append(getEndHour());
-		
+
 		return sb.toString();
 	}
 }

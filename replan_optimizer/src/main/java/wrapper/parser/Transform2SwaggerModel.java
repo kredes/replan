@@ -37,6 +37,10 @@ public class Transform2SwaggerModel {
         io.swagger.model.PlannedFeature plannedFeature = new io.swagger.model.PlannedFeature();
         plannedFeature.setBeginHour(pf.getBeginHour());
         plannedFeature.setEndHour(pf.getEndHour());
+
+        pf.getFeature().setIniTime(pf.getBeginHour());
+        pf.getFeature().setAssignedEmployee(pf.getEmployee().getName());
+
         plannedFeature.setFeature(Feature2Swagger(pf.getFeature()));
         plannedFeature.setResource(Employee2Resource(pf.getEmployee()));
 
@@ -53,6 +57,9 @@ public class Transform2SwaggerModel {
         feature.setPriority(Priority2Swagger(f.getPriority()));
         feature.setDepends_on(FeatureList2Swagger(f.getPreviousFeatures()));
         feature.setRequired_skills(SkillList2Swagger(f.getRequiredSkills()));
+        feature.setCan_replan(f.getCanReplan());
+        feature.setIni_time(f.getIniTime());
+        feature.setAssigned_resource(f.getAssignedEmployee());
 
         return feature;
     }
@@ -71,7 +78,7 @@ public class Transform2SwaggerModel {
 
     /*Employee - Resource*/
     public Resource Employee2Resource(Employee employee) {
-
+        if(employee == null) return null;
         Resource resource = new Resource();
         resource.setName(employee.getName());
         resource.setSkills(SkillList2Swagger(employee.getSkills()));

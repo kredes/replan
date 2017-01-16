@@ -26,20 +26,20 @@ public class EntitiesEvaluator {
 
 
     public NextReleaseProblem nextReleaseProblemAddSkills(int nbWeeks, Number hoursPerweek,
-                                                          List<Feature> features, List<Employee> employees) {
+                                                          List<Feature> features, List<Employee> employees,Double iniTime) {
 
         NextReleaseProblem problem = new NextReleaseProblem(this.featuresAddSkills(features),
                                                             this.employeesAddSkills(employees),
-                                                            new IterationParameters(nbWeeks, hoursPerweek.doubleValue()));
+                                                            new IterationParameters(nbWeeks, hoursPerweek.doubleValue()),iniTime);
         return problem;
     }
 
     public NextReleaseProblem nextReleaseProblemDeleteSkills(int nbWeeks, Number hoursPerweek,
-                                                             List<Feature> features, List<Employee> employees) {
+                                                             List<Feature> features, List<Employee> employees,Double iniTime) {
 
         NextReleaseProblem problem = new NextReleaseProblem(this.featuresDeleteSkills(features),
                                                             this.employeesDeleteSkills(employees),
-                                                            new IterationParameters(nbWeeks, hoursPerweek.doubleValue()));
+                                                            new IterationParameters(nbWeeks, hoursPerweek.doubleValue()), iniTime);
 
         return problem;
     }
@@ -98,9 +98,15 @@ public class EntitiesEvaluator {
         catch (Exception e) { skills = new ArrayList<>(); }
 
         skills.add(new Skill("null"));
-
-        return new Feature(f.getName(),f.getPriority(),f.getDuration(),f.getPreviousFeatures(),skills);
-    }
+        Feature f_new = new Feature(f.getName(),
+                                    f.getPriority(),
+                                    f.getDuration(),
+                                    f.getPreviousFeatures(),
+                                    skills,
+                                    f.getIniTime(),
+                                    f.getAssignedEmployee(),
+                                    f.getCanReplan());
+        return  f_new; }
 
     public List<Feature> featuresDeleteSkills(List<Feature> features) {
         List<Feature> listFeatures = new ArrayList<>();
@@ -113,7 +119,14 @@ public class EntitiesEvaluator {
         List<Skill> skills = f.getRequiredSkills();
         skills.remove(new Skill("null"));
 
-        Feature feature = new Feature(f.getName(),f.getPriority(),f.getDuration(),f.getPreviousFeatures(),skills);
+        Feature feature = new Feature(f.getName(),
+                                    f.getPriority(),
+                                    f.getDuration(),
+                                    f.getPreviousFeatures(),
+                                    skills,
+                                    f.getIniTime(),
+                                    f.getAssignedEmployee(),
+                                    f.getCanReplan());
         return feature;
     }
 

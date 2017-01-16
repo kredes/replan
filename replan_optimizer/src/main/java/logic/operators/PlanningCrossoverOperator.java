@@ -105,9 +105,10 @@ public class PlanningCrossoverOperator implements CrossoverOperator<PlanningSolu
 				
 				if (minSize == 1) {
 					splitPosition = 1;
-				} 
+				}
+				else if(minSize<= problem.getIniTime().intValue()) splitPosition = 1;
 				else {
-					splitPosition = randomGenerator.nextInt(1, minSize);
+					splitPosition = randomGenerator.nextInt(problem.getIniTime().intValue(), minSize);
 				}
 				
 				// Copy and unschedule the post-cut tasks

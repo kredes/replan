@@ -6,17 +6,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-
-
-
 /**
  * Priority
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class Priority   {
+  @JsonProperty("level")
   private Integer level = null;
 
+  @JsonProperty("score")
   private Integer score = null;
 
   public Priority level(Integer level) {

@@ -8,16 +8,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import entities.*;
 import org.uma.jmetal.problem.ConstrainedProblem;
 import org.uma.jmetal.problem.impl.AbstractGenericProblem;
 import org.uma.jmetal.util.solutionattribute.impl.NumberOfViolatedConstraints;
 import org.uma.jmetal.util.solutionattribute.impl.OverallConstraintViolation;
 
-import entities.Employee;
-import entities.PlannedFeature;
-import entities.EmployeeWeekAvailability;
-import entities.Skill;
-import entities.Feature;
 import entities.parameters.IterationParameters;
 
 /**
@@ -92,7 +88,26 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 	 * The worst end date, if there is no planned feature
 	 */
 	private double worstEndDate;
-	
+
+
+	/**
+	 * Features that are alreay planned
+	 */
+	private List<Feature> plannedFeatureBefore;
+
+
+
+    private Double iniTime;
+
+
+    public Double getIniTime() {
+        return iniTime;
+    }
+
+    public void setIniTime(Double iniTime) {
+        this.iniTime = iniTime;
+    }
+
 	/**
 	 * The index of the priority score objective in the objectives list
 	 */
@@ -181,10 +196,24 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 	 * @param employees employees available during the iteration
 	 * @param iterationParam The parameters of the iteration
 	 */
-	public NextReleaseProblem(List<Feature> features, List<Employee> employees, IterationParameters iterationParam) {
+	public NextReleaseProblem(List<Feature> features, List<Employee> employees, IterationParameters iterationParam, Double iniTime) {
 		this.employees = employees;
 		this.nbWeeks = iterationParam.getNumberOfWeek();
 		this.nbHoursByWeek = iterationParam.getHoursByWeek();
+		this.iniTime = iniTime;
+
+		this.plannedFeatureBefore = new ArrayList<>();
+
+		//Separate features to replan and not replan
+		List<Feature> toPlanFeatures = new ArrayList<>();
+		for(Feature feature: features) {
+			if(!feature.getCanReplan()) {
+				this.plannedFeatureBefore.add(feature);
+			}
+			else {
+				toPlanFeatures.add(feature);
+			}
+		}
 		
 		skilledEmployees = new HashMap<>();
 		for (Employee employee : employees) {
@@ -199,9 +228,16 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 		}
 		
 		this.features = new ArrayList<>();
-		for (Feature feature : features) {
-			if (skilledEmployees.get(feature.getRequiredSkills().get(0)) != null) {
-				if (features.containsAll(feature.getPreviousFeatures())) {
+		for (Feature feature : toPlanFeatures) {
+
+			if (this.skilledEmployees.get(feature.getRequiredSkills().get(0)) != null) {
+				List<Feature> copy_features = new ArrayList<>();
+
+				for(Feature f: feature.getPreviousFeatures()) {
+					if(toPlanFeatures.contains(f)) copy_features.add(f);
+					else if(this.plannedFeatureBefore.contains(f)) copy_features.add(f);
+				}
+				if (copy_features.equals(feature.getPreviousFeatures())) {
 					this.features.add(feature);
 				}
 			}
@@ -265,13 +301,13 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 		double endPlanningHour = 0.0;
 		Map<Employee, List<EmployeeWeekAvailability>> employeesTimeSlots = new HashMap<>();
 		List<PlannedFeature> plannedFeatures = solution.getPlannedFeatures();
-			
+
 		solution.resetHours();
-		
+
 		for (PlannedFeature currentPlannedFeature : plannedFeatures) {
 			newBeginHour = 0.0;
 			Feature currentFeature = currentPlannedFeature.getFeature();
-				
+
 			// Checks the previous features end hour
 			for (Feature previousFeature : currentFeature.getPreviousFeatures()) {
 				PlannedFeature previousPlannedFeature = solution.findPlannedFeature(previousFeature);
@@ -279,12 +315,12 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 					newBeginHour = Math.max(newBeginHour, previousPlannedFeature.getEndHour());
 				}
 			}
-				
+
 			// Checks the employee availability
 			Employee currentEmployee = currentPlannedFeature.getEmployee();
 			List<EmployeeWeekAvailability> employeeTimeSlots = employeesTimeSlots.get(currentEmployee);
 			int currentWeek;
-			
+
 			if (employeeTimeSlots == null) {
 				employeeTimeSlots = new ArrayList<>();
 				employeeTimeSlots.add(new EmployeeWeekAvailability(newBeginHour, currentEmployee.getWeekAvailability()));
@@ -297,28 +333,28 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 			}
 
 			currentPlannedFeature.setBeginHour(newBeginHour);
-			
+
 			double remainFeatureHours = currentPlannedFeature.getFeature().getDuration();
 			double leftHoursInWeek;
 			EmployeeWeekAvailability currentWeekAvailability;
-			
+
 			currentWeek = ((int) newBeginHour) / (int)nbHoursByWeek;
-			
+
 			while (newBeginHour > (currentWeek + 1) * nbHoursByWeek) {
 				System.err.println("go");
 				currentWeek++;
 			}
-			
-			
-			
-			
-			
+
+
+
+
+
 			do {
 				currentWeekAvailability = employeeTimeSlots.get(employeeTimeSlots.size() - 1);
 				double newBeginHourInWeek = Math.max(newBeginHour, currentWeekAvailability.getEndHour());
 				leftHoursInWeek = Math.min((currentWeek + 1) * nbHoursByWeek - newBeginHourInWeek //Left Hours in the week
 						, currentWeekAvailability.getRemainHoursAvailable());
-				
+
 				if (remainFeatureHours <= leftHoursInWeek) { // The feature can be ended before the end of the week
 					currentWeekAvailability.setRemainHoursAvailable(currentWeekAvailability.getRemainHoursAvailable() - remainFeatureHours);
 					currentWeekAvailability.setEndHour(newBeginHourInWeek + remainFeatureHours);
@@ -333,16 +369,16 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 				}
 				currentWeekAvailability.addPlannedFeature(currentPlannedFeature);
 			} while (remainFeatureHours > 0.0);
-			
+
 			currentPlannedFeature.setEndHour(currentWeekAvailability.getEndHour());
 
 			endPlanningHour = Math.max(currentPlannedFeature.getEndHour(), endPlanningHour);
 		}
-		
+
 		solution.setEmployeesPlanning(employeesTimeSlots);
 		solution.setEndDate(endPlanningHour);
 		solution.setObjective(INDEX_PRIORITY_OBJECTIVE, solution.getPriorityScore());
-		solution.setObjective(INDEX_END_DATE_OBJECTIVE, 
+		solution.setObjective(INDEX_END_DATE_OBJECTIVE,
 				plannedFeatures.size() == 0 ? worstEndDate : endPlanningHour);
 		computeQuality(solution);
 	}
@@ -352,7 +388,7 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 		int precedencesViolated = 0;
 		int violatedConstraints;
 		double overall;
-		
+
 		for (PlannedFeature currentFeature : solution.getPlannedFeatures()) {
 			for (Feature previousFeature : currentFeature.getFeature().getPreviousFeatures()) {
 				PlannedFeature previousPlannedFeature = solution.findPlannedFeature(previousFeature);
@@ -361,15 +397,15 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 				}
 			}
 		}
-		
+
 		overall = -1.0 * precedencesViolated * precedenceConstraintOverall;
 		violatedConstraints = precedencesViolated;
-		
+
 		if (solution.getEndDate() > nbWeeks * nbHoursByWeek) {
 			violatedConstraints++;
 			overall -= 1.0;
 		}
-		
+
 		numberOfViolatedConstraints.setAttribute(solution, violatedConstraints);
 		overallConstraintViolation.setAttribute(solution, overall);
 		if (violatedConstraints > 0) {
@@ -388,5 +424,9 @@ public class NextReleaseProblem extends AbstractGenericProblem<PlanningSolution>
 		
 		globalQuality = (endDateQuality + priorityQuality) / 2;
 		solutionQuality.setAttribute(solution, globalQuality);
+	}
+
+	public List<Feature> getPlannedFeatureBefore() {
+		return this.plannedFeatureBefore;
 	}
 }

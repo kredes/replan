@@ -4,13 +4,10 @@
  */
 package logic;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.math3.util.Pair;
 import org.uma.jmetal.solution.Solution;
 import org.uma.jmetal.solution.impl.AbstractGenericSolution;
 import org.uma.jmetal.util.solutionattribute.impl.NumberOfViolatedConstraints;
@@ -44,6 +41,9 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 */
 	private List<Feature> undoneFeatures;
 
+    //New
+    private Double initHour;
+
 	/**
 	 * The end hour of the solution
 	 * Is up to date only when isUpToDate field is true
@@ -55,7 +55,9 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 */
 	private Map<Employee, List<EmployeeWeekAvailability>> employeesPlanning;
 	
-	
+
+    private Map<Employee,List<PlannedFeature>> planification;
+
 	/* --- Getters and Setters --- */
 
 	/**
@@ -106,7 +108,12 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 * @return a copy of the end list
 	 */
 	public List<PlannedFeature> getEndPlannedFeaturesSubListCopy(int beginPosition) {
-		return new ArrayList<>(plannedFeatures.subList(beginPosition, plannedFeatures.size()));
+		List<PlannedFeature> plannedFeatureList = new ArrayList<>(plannedFeatures.subList(beginPosition, plannedFeatures.size()));
+		List<PlannedFeature> copy = new ArrayList<>();
+		for(PlannedFeature plannedFeature: plannedFeatureList){
+			if(plannedFeature.getFeature().getCanReplan()) copy.add(plannedFeature);
+		}
+		return copy;
 	}
 	
 	/**
@@ -125,7 +132,7 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	}
 
 	/**
-	 * @param employeesPlannings the employeesPlannings to set
+	 * @param employeesPlanning the employeesPlannings to set
 	 */
 	public void setEmployeesPlanning(Map<Employee, List<EmployeeWeekAvailability>> employeesPlanning) {
 		this.employeesPlanning = employeesPlanning;
@@ -143,8 +150,46 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 		super(problem);
 	    numberOfViolatedConstraints = 0;
 
-	    initializePlannedFeatureVariables();
+        /*InitHour to replan*/
+        this.initHour = problem.getIniTime();
+
+        /*Features*/
+		undoneFeatures = new CopyOnWriteArrayList<Feature>();
+		undoneFeatures.addAll(problem.getFeatures());
+
+        this.planification = new HashMap<>();
+		this.plannedFeatures = new CopyOnWriteArrayList<PlannedFeature>();
+
+        /*Pair Name Employee-Employe*/
+		Map<String,Employee> aux = new HashMap<>();
+		for(Employee employee: problem.getEmployees())
+		     	aux.put(employee.getName(),employee);
+
+
+        //Features can't replan
+        List<Feature> featureList = problem.getPlannedFeatureBefore();
+        for(Feature feature: featureList) {
+			Employee e = aux.get(feature.getAssignedEmployee());
+            PlannedFeature plannedFeature = new PlannedFeature(feature,
+                    e,
+                    feature.getIniTime(),
+                    feature.getEndTime());
+            if(this.planification.containsKey(e)) {
+				this.planification.get(e).add(plannedFeature);
+			}
+			else {
+				List<PlannedFeature> p = new ArrayList<PlannedFeature>();
+				p.add(plannedFeature);
+				this.planification.put(e,p);
+			}
+
+
+            this.plannedFeatures.add(plannedFeature);
+        }
+
+        initializePlannedFeatureVariables();
 	    initializeObjectiveValues();
+
 	}
 	
 	/**
@@ -154,13 +199,33 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 */
 	public PlanningSolution(NextReleaseProblem problem, List<PlannedFeature> plannedFeatures) {
 		super(problem);
-	    numberOfViolatedConstraints = 0;
 
+	    numberOfViolatedConstraints = 0;
+        this.initHour = problem.getIniTime();
+
+        /*Features*/
 	    undoneFeatures = new CopyOnWriteArrayList<Feature>();
 		undoneFeatures.addAll(problem.getFeatures());
 		this.plannedFeatures = new CopyOnWriteArrayList<PlannedFeature>();
-		for (PlannedFeature plannedFeature : plannedFeatures) {
-			scheduleAtTheEnd(plannedFeature.getFeature(), plannedFeature.getEmployee());
+
+        for (PlannedFeature plannedFeature :  plannedFeatures) {
+            scheduleAtTheEnd(plannedFeature.getFeature(), plannedFeature.getEmployee());
+        }
+
+        /*Pair Name Employee-Employe*/
+		Map<String,Employee> aux = new HashMap<>();
+		for(Employee employee: problem.getEmployees()) {
+			aux.put(employee.getName(),employee);
+		}
+
+		/*Can't replan features*/
+        List<Feature> featureList = problem.getPlannedFeatureBefore();
+		for(Feature feature: featureList) {
+            PlannedFeature plannedFeature = new PlannedFeature(feature,
+                    aux.get(feature.getAssignedEmployee()),
+                    feature.getIniTime(),
+                    feature.getEndTime());
+            this.plannedFeatures.add(plannedFeature);
 		}
 	    initializeObjectiveValues();
 	}
@@ -172,6 +237,7 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	public PlanningSolution(PlanningSolution origin) {
 		super(origin.problem);
 
+		this.initHour = (double) origin.getInitHour();
 	    numberOfViolatedConstraints = origin.numberOfViolatedConstraints;
 	    
 	    plannedFeatures = new CopyOnWriteArrayList<>();
@@ -205,16 +271,21 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	/* --- Methods --- */
 	
 	/**
-	 * Exchange the two features in positions pos1 and pos2
+	 * Exchange the two features in positions pos1 and pos2 if both can replan
 	 * @param pos1 The position of the first planned feature to exchange
 	 * @param pos2 The position of the second planned feature to exchange
 	 */
 	public void exchange(int pos1, int pos2) {
+
 		if (pos1 >= 0 && pos2 >= 0 && pos1 < plannedFeatures.size() && pos2 < plannedFeatures.size() && pos1 != pos2) {
 			PlannedFeature feature1 = plannedFeatures.get(pos1);
-			plannedFeatures.set(pos1, new PlannedFeature(plannedFeatures.get(pos2)));
-			plannedFeatures.set(pos2, new PlannedFeature(feature1));
+			PlannedFeature feature2 = plannedFeatures.get(pos2);
+			if(feature1.getFeature().getCanReplan() && feature2.getFeature().getCanReplan()) {
+				plannedFeatures.set(pos1, new PlannedFeature(plannedFeatures.get(pos2)));
+				plannedFeatures.set(pos2, new PlannedFeature(feature1));
+			}
 		}
+
 	}
 	
 	/**
@@ -290,14 +361,14 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 * @param number the number of features to plan
 	 */
 	private void initializePlannedFeaturesRandomly(int number) {
+
 		Feature featureToDo;
 		List<Employee> skilledEmployees;
 		
 		for (int i = 0 ; i < number ; i++) {
 			featureToDo = undoneFeatures.get(randomGenerator.nextInt(0, undoneFeatures.size()-1));
 			skilledEmployees = problem.getSkilledEmployees(featureToDo.getRequiredSkills().get(0));
-			scheduleAtTheEnd(featureToDo,
-					skilledEmployees.get(randomGenerator.nextInt(0, skilledEmployees.size()-1)));
+			scheduleRandomly(new PlannedFeature(featureToDo,skilledEmployees.get(randomGenerator.nextInt(0,skilledEmployees.size()-1))));
 		}
 	}
 
@@ -308,11 +379,7 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	private void initializePlannedFeatureVariables() {
 		int numberOfFeatures = problem.getFeatures().size();
 		int nbFeaturesToDo = randomGenerator.nextInt(0, numberOfFeatures);
-		
-		undoneFeatures = new CopyOnWriteArrayList<Feature>();
-		undoneFeatures.addAll(problem.getFeatures());
-		plannedFeatures = new CopyOnWriteArrayList<PlannedFeature>();
-	
+
 		if (randomGenerator.nextDouble() > DefaultAlgorithmParameters.RATE_OF_NOT_RANDOM_GENERATED_SOLUTION) {
 			initializePlannedFeaturesRandomly(nbFeaturesToDo);
 		}
@@ -341,12 +408,14 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	}
 	
 	/**
-	 * Reset the begin hours of all the planned feature to 0.0
+	 * Reset the begin hours of all the planned feature to 0.0 if can replan
 	 */
 	public void resetHours() {
 		for (PlannedFeature plannedFeature : plannedFeatures) {
-			plannedFeature.setBeginHour(0.0);
-			plannedFeature.setEndHour(0.0);
+			if(plannedFeature.getFeature().getCanReplan()) {
+				plannedFeature.setBeginHour(problem.getIniTime());
+				plannedFeature.setEndHour(problem.getIniTime()+plannedFeature.getFeature().getDuration());
+			}
 		}
 	}
 
@@ -355,11 +424,37 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 * @param position the position of the planning
 	 * @param feature the feature to plan
 	 * @param e the employee who will execute the feature
+     *
 	 */
 	public void schedule(int position, Feature feature, Employee e) {
-		undoneFeatures.remove(feature);
-		plannedFeatures.add(position, new PlannedFeature(feature, e));
+        if(feature.getCanReplan()) {
+
+            while (position < planification.get(e).size()
+					&& !planification.get(e).get(position).getFeature().getCanReplan()) {
+                ++position;
+            }
+            if(position > planification.get(e).size()) return;
+
+            PlannedFeature p = new PlannedFeature(feature,e);
+			double max = problem.getIniTime();
+            for (int i = 0; i < position; ++i) {
+				max =planification.get(e).get(i).getEndHour();
+            }
+            //If not the last-last position
+            if(position < planification.get(e).size()  &&
+                    (max > planification.get(e).get(position+1).getFeature().getIniTime())) {
+                schedule(position+1,feature,e);
+            }
+            else {
+				undoneFeatures.remove(feature);
+                p.setBeginHour(max);
+                p.setEndHour(max+feature.getDuration());
+			    p.getFeature().setIniTime(max);
+                plannedFeatures.add(position, p);
+            }
+        }
 	}
+
 		
 	/**
 	 * Schedule a feature in the planning
@@ -369,9 +464,21 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 * @param e the employee who will realize the feature
 	 */
 	public void scheduleAtTheEnd(Feature feature, Employee e) {
-		if (!isAlreadyPlanned(feature)) {
-			undoneFeatures.remove(feature);
-			plannedFeatures.add(new PlannedFeature(feature, e));
+		if (!isAlreadyPlanned(feature) && feature.getCanReplan()) {
+			this.undoneFeatures.remove(feature);
+            int position = this.plannedFeatures.size();
+
+            PlannedFeature p = new PlannedFeature(feature,e);
+            double iniT = problem.getIniTime().intValue();
+			double max = 0.0;
+            for (int i = 0; i < position; ++i) {
+                iniT += plannedFeatures.get(i).getFeature().getDuration();
+				max = plannedFeatures.get(i).getEndHour();
+            }
+            p.setBeginHour(max);
+            p.setEndHour(max+feature.getDuration());
+			p.getFeature().setIniTime(max);
+            this.plannedFeatures.add(p);
 		}
 	}
 	
@@ -389,6 +496,7 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	public void scheduleRandomFeature(int insertionPosition) {
 		if (undoneFeatures.size() <= 0)
 			return;
+
 		Feature newFeature = undoneFeatures.get(randomGenerator.nextInt(0, undoneFeatures.size() -1));
 		List<Employee> skilledEmployees = problem.getSkilledEmployees(newFeature.getRequiredSkills().get(0));
 		Employee newEmployee = skilledEmployees.get(randomGenerator.nextInt(0, skilledEmployees.size()-1));
@@ -400,15 +508,16 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 	 * @param plannedFeature the plannedFeature to integrate to the planning
 	 */
 	public void scheduleRandomly(PlannedFeature plannedFeature) {
-		schedule(randomGenerator.nextInt(0, plannedFeatures.size()), plannedFeature.getFeature(), plannedFeature.getEmployee());
+		schedule(randomGenerator.nextInt(0,problem.getFeatures().size()), plannedFeature.getFeature(), plannedFeature.getEmployee());
 	}
 
 	/**
-	 * Unschedule a feature : remove it from the planned features and add it to the undone ones
+	 * Unschedule a feature : remove it from the planned features and add it to the undone ones if can replan
 	 * @param plannedFeature the planned feature to unschedule
 	 */
 	public void unschedule(PlannedFeature plannedFeature) {
-		if (isAlreadyPlanned(plannedFeature.getFeature())) {
+
+		if (isAlreadyPlanned(plannedFeature.getFeature())&&plannedFeature.getFeature().getCanReplan()) {
 			undoneFeatures.add(plannedFeature.getFeature());
 			plannedFeatures.remove(plannedFeature);
 				
@@ -500,5 +609,9 @@ public class PlanningSolution extends AbstractGenericSolution<PlannedFeature, Ne
 		sb.append("End Date: ").append(getEndDate()).append(System.getProperty("line.separator"));
 		
 		return sb.toString();
+	}
+
+	public int getInitHour() {
+		return this.initHour.intValue();
 	}
 }

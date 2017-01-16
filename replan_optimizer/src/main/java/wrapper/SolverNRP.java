@@ -26,11 +26,11 @@ import java.util.Set;
 
 public class SolverNRP {
 
-    public PlanningSolution executeNRP(int nbWeeks, Number hoursPerweek, List<Feature> features, List<Employee> employees){
+    public PlanningSolution executeNRP(int nbWeeks, Number hoursPerweek, List<Feature> features, List<Employee> employees,Double iniTime){
 
         EntitiesEvaluator ee = EntitiesEvaluator.getInstance();
 
-        NextReleaseProblem problem = ee.nextReleaseProblemAddSkills(nbWeeks,hoursPerweek,features,employees);
+        NextReleaseProblem problem = ee.nextReleaseProblemAddSkills(nbWeeks,hoursPerweek,features,employees,iniTime);
 
         PlanningSolution solution = this.generatePlanningSolution(problem);
 
@@ -53,7 +53,7 @@ public class SolverNRP {
         algorithm = new NSGAIIBuilder<PlanningSolution>(problem, crossover, mutation)
                 .setSelectionOperator(selection)
                 .setMaxIterations(500)
-                .setPopulationSize(100)
+                .setPopulationSize(50)
                 .build();
 
         new AlgorithmRunner.Executor(algorithm).execute();

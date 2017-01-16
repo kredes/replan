@@ -2,30 +2,31 @@ package io.swagger.model;
 
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.swagger.model.Feature;
-import io.swagger.model.Resource;
+
 import java.util.ArrayList;
 import java.util.List;
-
-
-
 
 /**
  * NextReleaseProblem
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class NextReleaseProblem   {
+  @JsonProperty("nbWeeks")
   private Integer nbWeeks = null;
 
+  @JsonProperty("hoursPerWeek")
   private Double hoursPerWeek = null;
 
+  @JsonProperty("features")
   private List<Feature> features = new ArrayList<Feature>();
 
+  @JsonProperty("resources")
   private List<Resource> resources = new ArrayList<Resource>();
+
+  @JsonProperty("actual_time")
+  private Double actual_time = null;
 
   public NextReleaseProblem nbWeeks(Integer nbWeeks) {
     this.nbWeeks = nbWeeks;
@@ -109,6 +110,24 @@ public class NextReleaseProblem   {
     this.resources = resources;
   }
 
+  public NextReleaseProblem actualTime(Double actualTime) {
+    this.actual_time = actualTime;
+    return this;
+  }
+
+   /**
+   * Get actual_time
+   * @return actual_time
+  **/
+  @ApiModelProperty(value = "")
+  public Double getActual_time() {
+    return actual_time;
+  }
+
+  public void setActual_time(Double actual_time) {
+    this.actual_time = actual_time;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -122,12 +141,13 @@ public class NextReleaseProblem   {
     return Objects.equals(this.nbWeeks, nextReleaseProblem.nbWeeks) &&
         Objects.equals(this.hoursPerWeek, nextReleaseProblem.hoursPerWeek) &&
         Objects.equals(this.features, nextReleaseProblem.features) &&
-        Objects.equals(this.resources, nextReleaseProblem.resources);
+        Objects.equals(this.resources, nextReleaseProblem.resources) &&
+        Objects.equals(this.actual_time, nextReleaseProblem.actual_time);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nbWeeks, hoursPerWeek, features, resources);
+    return Objects.hash(nbWeeks, hoursPerWeek, features, resources, actual_time);
   }
 
   @Override
@@ -139,6 +159,7 @@ public class NextReleaseProblem   {
     sb.append("    hoursPerWeek: ").append(toIndentedString(hoursPerWeek)).append("\n");
     sb.append("    features: ").append(toIndentedString(features)).append("\n");
     sb.append("    resources: ").append(toIndentedString(resources)).append("\n");
+    sb.append("    actual_time: ").append(toIndentedString(actual_time)).append("\n");
     sb.append("}");
     return sb.toString();
   }

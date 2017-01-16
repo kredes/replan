@@ -9,15 +9,13 @@ import io.swagger.model.PlannedFeature;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
-
 /**
  * PlanningSolution
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class PlanningSolution   {
+  @JsonProperty("jobs")
   private List<PlannedFeature> jobs = new ArrayList<PlannedFeature>();
 
   public PlanningSolution jobs(List<PlannedFeature> jobs) {

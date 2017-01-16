@@ -1,30 +1,41 @@
 package io.swagger.model;
 
 import java.util.Objects;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-
-
 /**
  * Feature
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class Feature   {
+  @JsonProperty("name")
   private String name = null;
 
+  @JsonProperty("duration")
   private Double duration = null;
 
+  @JsonProperty("priority")
   private Priority priority = null;
 
+  @JsonProperty("required_skills")
   private List<Skill> required_skills = new ArrayList<Skill>();
 
+  @JsonProperty("depends_on")
   private List<Feature> depends_on = new ArrayList<Feature>();
+
+  @JsonProperty("can_replan")
+  private Boolean can_replan = null;
+
+  @JsonProperty("ini_time")
+  private Double ini_time = null;
+
+  @JsonProperty("assigned_resource")
+  private String assigned_resource = null;
 
   public Feature name(String name) {
     this.name = name;
@@ -126,6 +137,60 @@ public class Feature   {
     this.depends_on = depends_on;
   }
 
+  public Feature canReplan(Boolean canReplan) {
+    this.can_replan = canReplan;
+    return this;
+  }
+
+   /**
+   * Get can_replan
+   * @return can_replan
+  **/
+  @ApiModelProperty(value = "")
+  public Boolean getCan_replan() {
+    return can_replan;
+  }
+
+  public void setCan_replan(Boolean can_replan) {
+    this.can_replan = can_replan;
+  }
+
+  public Feature iniTime(Double iniTime) {
+    this.ini_time = iniTime;
+    return this;
+  }
+
+   /**
+   * Get ini_time
+   * @return ini_time
+  **/
+  @ApiModelProperty(value = "")
+  public Double getIni_time() {
+    return ini_time;
+  }
+
+  public void setIni_time(Double ini_time) {
+    this.ini_time = ini_time;
+  }
+
+  public Feature assignedResource(String assignedResource) {
+    this.assigned_resource = assignedResource;
+    return this;
+  }
+
+   /**
+   * Get assigned_resource
+   * @return assigned_resource
+  **/
+  @ApiModelProperty(value = "")
+  public String getAssigned_resource() {
+    return assigned_resource;
+  }
+
+  public void setAssigned_resource(String assigned_resource) {
+    this.assigned_resource = assigned_resource;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -140,12 +205,15 @@ public class Feature   {
         Objects.equals(this.duration, feature.duration) &&
         Objects.equals(this.priority, feature.priority) &&
         Objects.equals(this.required_skills, feature.required_skills) &&
-        Objects.equals(this.depends_on, feature.depends_on);
+        Objects.equals(this.depends_on, feature.depends_on) &&
+        Objects.equals(this.can_replan, feature.can_replan) &&
+        Objects.equals(this.ini_time, feature.ini_time) &&
+        Objects.equals(this.assigned_resource, feature.assigned_resource);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, duration, priority, required_skills, depends_on);
+    return Objects.hash(name, duration, priority, required_skills, depends_on, can_replan, ini_time, assigned_resource);
   }
 
   @Override
@@ -158,6 +226,9 @@ public class Feature   {
     sb.append("    priority: ").append(toIndentedString(priority)).append("\n");
     sb.append("    required_skills: ").append(toIndentedString(required_skills)).append("\n");
     sb.append("    depends_on: ").append(toIndentedString(depends_on)).append("\n");
+    sb.append("    can_replan: ").append(toIndentedString(can_replan)).append("\n");
+    sb.append("    ini_time: ").append(toIndentedString(ini_time)).append("\n");
+    sb.append("    assigned_resource: ").append(toIndentedString(assigned_resource)).append("\n");
     sb.append("}");
     return sb.toString();
   }

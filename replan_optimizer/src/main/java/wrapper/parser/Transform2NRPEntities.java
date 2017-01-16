@@ -13,6 +13,8 @@ public class Transform2NRPEntities {
     /*Employee-Resources*/
     public Employee Resource2Employee(Resource resource) {
 
+        if(resource == null) return null;
+
         List<Skill> skills = SkillList2Entities(resource.getSkills());
 
         return new Employee(resource.getName(),resource.getAvailability(),skills);
@@ -67,7 +69,20 @@ public class Transform2NRPEntities {
                                       PriorityLevel2Entities(f.getPriority()),
                                       f.getDuration(),
                                       FeatureList2Entities(f.getDepends_on()),
-                                      SkillList2Entities(f.getRequired_skills()));
+                                      SkillList2Entities(f.getRequired_skills()),
+                                      f.getIni_time(),
+                                      f.getAssigned_resource(),
+                                      f.getCan_replan()
+
+        );
+
+        feature.setCanReplan(f.getCan_replan());
+        if(!f.getCan_replan()) {
+            feature.setCanReplan(false);
+            feature.setIniTime(f.getIni_time());
+        }
+        else feature.setCanReplan(true);
+
         return feature;
     }
 

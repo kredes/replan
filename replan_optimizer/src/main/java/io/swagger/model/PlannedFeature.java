@@ -8,21 +8,22 @@ import io.swagger.annotations.ApiModelProperty;
 import io.swagger.model.Feature;
 import io.swagger.model.Resource;
 
-
-
-
 /**
  * PlannedFeature
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class PlannedFeature   {
+  @JsonProperty("beginHour")
   private Double beginHour = null;
 
+  @JsonProperty("endHour")
   private Double endHour = null;
 
+  @JsonProperty("resource")
   private Resource resource = null;
 
+  @JsonProperty("feature")
   private Feature feature = null;
 
   public PlannedFeature beginHour(Double beginHour) {

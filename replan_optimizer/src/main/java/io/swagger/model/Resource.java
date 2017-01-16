@@ -1,25 +1,27 @@
 package io.swagger.model;
 
 import java.util.Objects;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-
+import io.swagger.model.Skill;
 import java.util.ArrayList;
 import java.util.List;
-
-
-
 
 /**
  * Resource
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.SpringCodegen", date = "2016-10-01T15:48:29.618Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-01-14T06:15:31.650Z")
 
 public class Resource   {
+  @JsonProperty("name")
   private String name = null;
 
+  @JsonProperty("availability")
   private Double availability = null;
 
+  @JsonProperty("skills")
   private List<Skill> skills = new ArrayList<Skill>();
 
   public Resource name(String name) {
@@ -40,8 +42,8 @@ public class Resource   {
     this.name = name;
   }
 
-  public Resource weekAvailability(Double weekAvailability) {
-    this.availability = weekAvailability;
+  public Resource availability(Double availability) {
+    this.availability = availability;
     return this;
   }
 

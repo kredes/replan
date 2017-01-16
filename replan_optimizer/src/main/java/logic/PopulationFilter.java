@@ -55,7 +55,10 @@ public class PopulationFilter {
 				bestSolutions.add(currentSolution);
 			}
 		}
-		
+
+
+
+
 		return bestSolutions;
 	}
 
